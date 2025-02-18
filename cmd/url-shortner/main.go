@@ -28,7 +28,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
+	s, err := storage.GetURL("gogle")
+	if err != nil {
+		log.Error("failed to get url", sl.Err(err))
+	}
+
+	log.Info("Query res", s)
 
 	// TODO : init router
 
