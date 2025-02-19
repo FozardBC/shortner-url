@@ -4,8 +4,12 @@ import (
 	"log/slog"
 	"os"
 	"url-shortner/internal/config"
+	mwLogger "url-shortner/internal/http-server/middleware/logger"
 	"url-shortner/internal/lib/logger/sl"
 	"url-shortner/internal/storage/sqlite"
+
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -28,12 +32,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	s, err := storage.GetURL("gogle")
-	if err != nil {
-		log.Error("failed to get url", sl.Err(err))
-	}
+	_ = storage
 
-	log.Info("Query res", s)
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(mwLogger.New(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 
 	// TODO : init router
 
