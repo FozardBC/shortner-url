@@ -11,12 +11,12 @@ import (
 type Config struct {
 	Env         string     `yaml:"env" env-default:"local" env-required:"true"`
 	StoragePath string     `yaml:"storage_path" env-required:"true"`
-	http_server HTTPServer `yaml:"http_server" env-required:"true"`
+	HTTPServer  HTTPServer `yaml:"http_server" env-required:"true"`
 }
 
 type HTTPServer struct {
 	Address     string        `yaml:"address" env-default:"localhost:8080"`
-	Timeiut     time.Duration `yaml:"timeout" env-default:"30s"`
+	Timeout     time.Duration `yaml:"timeout" env-default:"30s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"120s"`
 }
 

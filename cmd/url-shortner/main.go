@@ -2,9 +2,12 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"url-shortner/internal/config"
+	"url-shortner/internal/http-server/handlers/url/save"
 	mwLogger "url-shortner/internal/http-server/middleware/logger"
+	"url-shortner/internal/lib/logger/handler/slogpretty"
 	"url-shortner/internal/lib/logger/sl"
 	"url-shortner/internal/storage/sqlite"
 
@@ -23,7 +26,7 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	log.Info("url-shortner is starting", slog.String("env", cfg.Env))
+	log.Info("url-shortner is starting", slog.String("env", cfg.HTTPServer.Address))
 	log.Debug("debug msgs are enabled")
 
 	storage, err := sqlite.New(cfg.StoragePath)
@@ -42,7 +45,23 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	// TODO : init router
+	router.Post("/url", save.New(log, storage))
+
+	log.Info("starting server", slog.String("address", cfg.HTTPServer.Address))
+
+	srv := &http.Server{
+		Addr:         cfg.HTTPServer.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("failed to start server")
+	}
+
+	log.Error("server stopped")
 
 	// TODO : run server
 }
@@ -52,9 +71,7 @@ func setupLogger(env string) *slog.Logger {
 
 	switch env {
 	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
+		log = setupPrettySlog()
 	case envDev:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
@@ -66,4 +83,16 @@ func setupLogger(env string) *slog.Logger {
 	}
 
 	return log
+}
+
+func setupPrettySlog() *slog.Logger {
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewPrettyHandler(os.Stdout)
+
+	return slog.New(handler)
 }

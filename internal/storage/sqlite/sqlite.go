@@ -26,7 +26,7 @@ func New(storagePath string) (*Storage, error) {
 	CREATE TABLE IF NOT EXISTS url(
 		id INTEGER PRIMARY KEY,
 		alias TEXT NOT NULL UNIQUE,
-		url TEXT NOT NULL);
+		url TEXT NOT NULL UNIQUE);
 	CREATE INDEX IF NOT EXISTS idx_alias ON url(alias);
 		`)
 
@@ -42,6 +42,7 @@ func New(storagePath string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
+// TODO: check if alias is already exists
 func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	const op = "storage.sqlite.SaveURL"
 
