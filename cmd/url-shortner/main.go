@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"url-shortner/internal/config"
+	"url-shortner/internal/http-server/handlers/redirect"
+	"url-shortner/internal/http-server/handlers/url/delete"
 	"url-shortner/internal/http-server/handlers/url/save"
 	mwLogger "url-shortner/internal/http-server/middleware/logger"
 	"url-shortner/internal/lib/logger/handler/slogpretty"
@@ -35,8 +37,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
-
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -46,6 +46,8 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storage))
+	router.Delete("/{alias}", delete.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.HTTPServer.Address))
 
